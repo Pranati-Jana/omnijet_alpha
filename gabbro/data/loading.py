@@ -6,6 +6,7 @@ import fastjet as fj
 import numpy as np
 import uproot
 import vector
+import h5py
 
 from gabbro.utils.jet_types import get_jet_type_from_file_prefix, jet_types_dict
 
@@ -93,7 +94,7 @@ def read_tokenized_jetclass_file(
 
     return x_ak, labels_onehot[labels]
 
-
+#To read jetclass dataset
 def read_jetclass_file(
     filepath,
     particle_features=["part_pt", "part_eta", "part_phi", "part_energy"],
@@ -248,6 +249,166 @@ def read_jetclass_file(
 
     return x_particles, x_jets, y
 
+def read_jetclass_h5_file(
+    filepath,
+    particle_features=["part_pt", "part_eta", "part_phi", "part_energy"],
+    jet_features=["jet_pt", "jet_eta", "jet_phi", "jet_sdmass"],
+    labels=None,
+    return_p4=False,
+    n_load=None,
+):
+    """Loads a single file from the JetClass dataset.
+
+    Parameters:
+    ----------
+    filepath : str
+        Path to the h5 data file.
+    particle_features : List[str], optional
+        A list of particle-level features to be loaded.
+        Possible options are:
+        - part_px
+        - part_py
+        - part_pz
+        - part_energy
+        - part_deta
+        - part_dphi
+        - part_d0val
+        - part_d0err
+        - part_dzval
+        - part_dzerr
+        - part_charge
+        - part_isChargedHadron
+        - part_isNeutralHadron
+        - part_isPhoton
+        - part_isElectron
+        - part_isMuon
+
+    jet_features : List[str], optional
+        A list of jet-level features to be loaded.
+        Possible options are:
+        - jet_pt
+        - jet_eta
+        - jet_phi
+        - jet_energy
+        - jet_nparticles
+        - jet_sdmass
+        - jet_tau1
+        - jet_tau2
+        - jet_tau3
+        - jet_tau4
+        - aux_genpart_eta
+        - aux_genpart_phi
+        - aux_genpart_pid
+        - aux_genpart_pt
+        - aux_truth_match
+
+    return_p4 : bool, optional
+        Whether to return the 4-momentum of the particles.
+
+    Returns:
+    -------
+    x_particles : ak.Array
+        An awkward array of the particle-level features.
+    x_jets : ak.Array
+        An awkward array of the jet-level features.
+    y : ak.Array
+        An awkward array of the truth labels (one-hot encoded).
+    p4 : ak.Array, optional
+        An awkward array of the 4-momenta of the particles.
+    """
+    with h5py.File(filepath, "r") as f:
+        if n_load is not None:
+                slc = slice(0, n_load)
+        else:
+                slc = slice(None)
+            
+        pf         = f["PFCands"][slc]
+        jets       = f["jet_kinematics"][slc]
+        tag        = f["jet_tagging"][slc]
+        event_info = f["event_info"][slc]
+
+    pf = np.array(pf, dtype=np.float32)
+    
+    E = pf[:, :, 3]
+    mask = E != 0
+    px = ak.mask(pf[:, :, 0], mask)
+    py = ak.mask(pf[:, :, 1], mask)
+    pz = ak.mask(pf[:, :, 2], mask)
+    E  = ak.mask(E, mask)
+    # Particle 4 vectors
+    p4 = vector.zip({
+        "px": px,
+        "py": py, 
+        "pz": pz, 
+        "E": E
+        }
+     )
+    p4_jet = ak.sum(p4, axis=1)
+    #Massless
+    p4_massless = vector.zip({
+    "pt":  p4.pt,
+    "eta": p4.eta,
+    "phi": p4.phi,
+    "mass": ak.zeros_like(p4.pt)
+    }                    
+    )
+
+    p4_jet_massless = ak.sum(p4_massless, axis=1)
+    
+    part_dict = {
+    
+         "part_pt"         : p4.pt,
+         "part_eta"        : p4.eta,
+         "part_phi"        : p4.phi,
+         "part_ptrel"      : p4.pt / p4_jet.pt[:, np.newaxis],
+         "part_erel"       : p4.E / p4_jet.energy[:, np.newaxis], 
+         "part_etarel"     : p4.deltaeta(p4_jet[:, np.newaxis]),
+         "part_phirel"     : p4.deltaphi(p4_jet[:, np.newaxis]),
+         "part_deltaR"     : p4.deltaR(p4_jet[:, np.newaxis]),
+         "part_energy_raw" : p4.E,
+    
+         "part_pt_massless"         : p4_massless.pt,
+         "part_eta_massless"        : p4_massless.eta,
+         "part_phi_massless"        : p4_massless.phi,
+         "part_ptrel_massless"      : p4_massless.pt / p4_jet_massless.pt[:, np.newaxis],
+         "part_erel_massless"       : p4_massless.E / p4_jet_massless.energy[:, np.newaxis],
+         "part_etarel_massless"     : p4_massless.deltaeta(p4_jet_massless[:, np.newaxis]),
+         "part_phirel_massless"     : p4_massless.deltaphi(p4_jet_massless[:, np.newaxis]),
+         "part_deltaR_massless"     : p4_massless.deltaR(p4_jet_massless[:, np.newaxis]),
+         "part_energy_raw_massless" : p4_massless.E,
+    }
+ 
+    x_particles = ak.Array(part_dict) if particle_features is None else ak.Array({k: part_dict[k] for k in particle_features})
+    #Jet features
+    if jet_features is None:
+        x_jets = jets
+    else:
+        # Map standard jet features from f["jet_kinematics"]
+        jet_map = {
+            "jet_pt": jets[:, 0],
+            "jet_eta": jets[:, 1],
+            "jet_phi": jets[:, 2],
+            "jet_sdmass": jets[:, 3],
+            "jet_nparticles": tag[:, 0],
+            "jet_tau1": tag[:, 1],
+            "jet_tau2": tag[:, 2],
+            "jet_tau3": tag[:, 3],
+            "jet_tau4": tag[:, 4],
+
+        }
+    x_jets = np.column_stack([jet_map[f] for f in jet_features])
+    
+    if labels is not None:
+        n_jets = len(jets)
+        y = ak.Array({name: np.zeros(n_jets, dtype=np.float32) for name in labels})
+    else:
+        y = None
+
+
+    if return_p4:
+        return x_particles, x_jets, y, p4
+
+    return x_particles, x_jets, y
 
 def load_particles(
     filenames,
@@ -294,7 +455,7 @@ def load_particles(
     for i, filename in enumerate(filenames):
         logger.info(f"Loading particles from {filename}")
 
-        ak_particle_features_i, _, _, ak_particles_p4s_i = read_jetclass_file(
+        ak_particle_features_i, _, _, ak_particles_p4s_i = read_jetclass_h5_file(
             filename,
             return_p4=True,
             particle_features=particle_features,
