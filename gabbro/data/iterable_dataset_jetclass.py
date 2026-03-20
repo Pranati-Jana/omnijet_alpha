@@ -11,7 +11,7 @@ import vector
 from torch.utils.data import DataLoader, IterableDataset
 
 from gabbro.data.data_tokenization import reconstruct_jetclass_file
-from gabbro.data.loading import read_jetclass_file, read_tokenized_jetclass_file
+from gabbro.data.loading import read_jetclass_h5_file, read_tokenized_jetclass_file
 from gabbro.utils.arrays import (
     ak_pad,
     ak_select_and_preprocess,
@@ -299,7 +299,7 @@ class CustomIterableDataset(IterableDataset):
             else:
                 # read the data from the file
                 # can add jet features, labels, and p4s here
-                ak_x_particles, _, ak_jet_type_labels = read_jetclass_file(
+                ak_x_particles, _, ak_jet_type_labels = read_jetclass_h5_file(
                     filename,
                     particle_features=self.particle_features_list,
                     labels=self.labels_to_load,

@@ -51,7 +51,7 @@ def main(ckpt_path, n_eval, dev):
 
     # complete the path
     ckpt_path = list(ckpt_path.parent.glob(ckpt_path.name))[0]
-    config_path = ckpt_path.parent.parent / "config.yaml"
+    config_path = ckpt_path.parent / "config.yaml"
     cfg = OmegaConf.load(config_path)
     cfg.data.dataset_kwargs_common["n_jets_per_file"] = n_eval
     logger.info(f"Loading config from: {config_path}")
@@ -257,7 +257,7 @@ def main(ckpt_path, n_eval, dev):
 
     logger.info("Plotting jet features")
 
-    fig, axarr = plt.subplots(1, 3, figsize=(7.2, 1.6))
+    fig, axarr = plt.subplots(1, 5, figsize=(12, 2.4))
     ax = axarr[0]
     ax.hist(
         ak.num(p4s_original), bins=np.linspace(0, 100, 101), density=True, color="C0", alpha=0.5
@@ -275,7 +275,7 @@ def main(ckpt_path, n_eval, dev):
     jets_reco = ak.sum(p4s_reco, axis=1)
 
     ax = axarr[1]
-    ax.hist(jets_original.pt, bins=60, density=True, color="C0", alpha=0.5, label="Truth")
+    ax.hist(jets_original.pt, bins=60, density=True, color="C0", alpha=0.5, label="Aspen open JetData")
     ax.hist(jets_reco.pt, bins=60, histtype="step", density=True, color="C0", label="Reco")
     ax.set_xlabel("Jet $p_T$ [GeV]")
 
@@ -287,7 +287,7 @@ def main(ckpt_path, n_eval, dev):
         density=True,
         alpha=0.5,
         color="C0",
-        label="Truth",
+        label="Aspen open Data",
     )
     ax.hist(
         np.clip(jets_reco.mass, 0, 250),
@@ -298,6 +298,16 @@ def main(ckpt_path, n_eval, dev):
         label="Reco",
     )
     ax.set_xlabel("Jet mass [GeV]")
+    #jet phi
+    ax = axarr[3]
+    ax.hist(jets_original.phi, bins=60, density=True, color="C0", alpha=0.5, label="Aspen open JetData")
+    ax.hist(jets_reco.phi, bins=60, histtype="step", density=True, color="C0", label="Reco")
+    ax.set_xlabel("Jet $\\phi$")
+    ax = axarr[4]
+    ax.hist(jets_original.eta, bins=60, density=True, color="C0", alpha=0.5, label="Aspen open JetData")
+    ax.hist(jets_reco.eta, bins=60, histtype="step", density=True, color="C0", label="Reco")
+    ax.set_xlabel("Jet $\\eta$")
+    
     ax.legend(loc="upper right")
     fig.tight_layout()
     fig.set_dpi(300)
@@ -317,7 +327,7 @@ def main(ckpt_path, n_eval, dev):
             p4s_original[i].eta,
             p4s_original[i].phi,
             s=p4s_original[i].pt,
-            label="Truth",
+            label="Aspen open JetData",
             alpha=0.4,
             color="steelblue",
         )

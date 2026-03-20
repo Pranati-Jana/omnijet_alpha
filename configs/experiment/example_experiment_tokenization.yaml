@@ -21,16 +21,16 @@ seed: 1603
 load_weights_from: false
 
 data:
-  # the `data_dir` is the path to the dataset (for JetClass this is where the train_100M, val_5M, ... folders are)
-  data_dir: /data/dust/user/birkjosc/datasets/jetclass/JetClass/
+  # the `data_dir` is the path to the dataset (for JetClass, this is where the train_100M, val_5M, ... folders are)
+  data_dir: /global/cfs/cdirs/m2612/treasure/datasets/AspenOpenJet
   batch_size: 512 # NOTE: adapt the limit_train_batches accordingly
   dataset_kwargs_train:
-    max_n_files_per_type: 1 # for this example we only load one file per type
+    max_n_files_per_type: 40 # for this example we only load one file per type
   dataset_kwargs_common:
     n_jets_per_file: 1000 # for this example we only load 1000 jets per file
-    n_files_at_once: 10 # load 10 files at once (which are all in this case)
+    n_files_at_once: 40 # load 10 files at once (which are all in this case)
     load_only_once: true # load the files only once and keep them in memory
-    pad_length: 128 # pad the jets to a length of 128 particles
+    pad_length: 128 # pad the jets to a length of 128 particles, 128
     feature_dict:
       part_pt: {multiply_by: 1, subtract_by: 1.8, func: "np.log", inv_func: "np.exp"}
       part_etarel: {multiply_by: 3, larger_than: -0.8, smaller_than: 0.8}
@@ -76,7 +76,7 @@ model:
     num_heads: 8
     alpha: 10
     vq_kwargs:
-      num_codes: 512
+      num_codes: 512 #512
       beta: 0.9
       kmeans_init: true
       norm: null

@@ -76,7 +76,7 @@ def read_tokenized_jetclass_file(
     # extract jet type from filename and create the corresponding labels
     jet_type_prefix = filepath.split("/")[-1].split("_")[0] + "_"
     jet_type_name = get_jet_type_from_file_prefix(jet_type_prefix)
-    # one-hot encode the jet type
+    # one-hot encode the jet type, for jetclass file
     labels_onehot = ak.Array(
         {
             f"label_{jet_type}": np.ones(len(ak_tokens)) * (jet_type_name == jet_type)
@@ -93,7 +93,91 @@ def read_tokenized_jetclass_file(
     x_ak = ak.Array({"part_token_id": ak_tokens})
 
     return x_ak, labels_onehot[labels]
+#For h5 files
+def read_tokenized_jetclass_h5_file(
+    filepath,
+    particle_features=["part_token_id"],
+    labels=[
+        "label_QCD",
+        "label_Hbb",
+        "label_Hcc",
+        "label_Hgg",
+        "label_H4q",
+        "label_Hqql",
+        "label_Zqq",
+        "label_Wqq",
+        "label_Tbqq",
+        "label_Tbl",
+    ],
+    remove_start_token=False,
+    remove_end_token=False,
+    shift_tokens_minus_one=False,
+    n_load=None,
+    random_seed=None,
+):
+    """Reads a file that contains the tokenized JetClass jets.
 
+    Parameters:
+    ----------
+    filepath : str
+        Path to the file.
+    particle_features : List[str], optional
+        A list of particle-level features to be loaded. Should only contain "part_token_id".
+    labels : List[str], optional
+        A list of truth labels to be loaded.
+    remove_start_token : bool, optional
+        Whether to remove the start token from the tokenized sequence.
+    remove_end_token : bool, optional
+        Whether to remove the end token from the tokenized sequence.
+    shift_tokens_minus_one : bool, optional
+        Whether to shift the token values by -1.
+    n_load : int, optional
+        Number of events to load. If None, all events are loaded.
+    random_seed : int, optional
+        Random seed for shuffling the data. If None, no shuffling is performed.
+
+
+    Returns:
+    -------
+    tokens : List[str]
+        A list of file paths.
+    """
+
+    ak_tokens = ak.from_parquet(filepath)
+
+    if random_seed is not None:
+        rng = np.random.default_rng(random_seed)
+        permutation = rng.permutation(len(ak_tokens))
+        ak_tokens = ak_tokens[permutation]
+
+    if n_load is not None:
+        ak_tokens = ak_tokens[:n_load]
+    # extract jet type from filename and create the corresponding labels
+    jet_type_prefix = filepath.split("/")[-1].split("_")[0] + "_"
+    jet_type_name = get_jet_type_from_file_prefix(jet_type_prefix)
+    # one-hot encode the jet type, for jetclass file
+    # labels_onehot = ak.Array(
+    #     {
+    #         f"label_{jet_type}": np.ones(len(ak_tokens)) * (jet_type_name == jet_type)
+    #         for jet_type in jet_types_dict
+    #     }
+    # )
+    labels_onehot = ak.Array(
+    {
+        "label_generic": np.ones(len(ak_tokens))
+    }
+    )
+    labels = ["label_generic"]
+    if remove_start_token:
+        ak_tokens = ak_tokens[:, 1:]
+    if remove_end_token:
+        ak_tokens = ak_tokens[:, :-1]
+    if shift_tokens_minus_one:
+        ak_tokens = ak_tokens - 1
+
+    x_ak = ak.Array({"part_token_id": ak_tokens})
+
+    return x_ak, labels_onehot[labels]
 #To read jetclass dataset
 def read_jetclass_file(
     filepath,
@@ -224,9 +308,7 @@ def read_jetclass_file(
     table["part_etarel"] = p4.deltaeta(p4_jet)
     table["part_phirel"] = p4.deltaphi(p4_jet)
     table["part_deltaR"] = p4.deltaR(p4_jet)
-    table["part_energy_raw"] = table[
-        "part_energy"
-    ]  # workaround to have this feature twice if we want
+    table["part_energy_raw"] = table["part_energy"] 
 
     table["part_pt_massless"] = p4_massless.pt
     table["part_px_massless"] = p4_massless.px
@@ -381,6 +463,7 @@ def read_jetclass_h5_file(
     x_particles = ak.Array(part_dict) if particle_features is None else ak.Array({k: part_dict[k] for k in particle_features})
     #Jet features
     if jet_features is None:
+        print("WARNING: jet_features is None → using default feature set")
         x_jets = jets
     else:
         # Map standard jet features from f["jet_kinematics"]

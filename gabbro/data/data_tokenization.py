@@ -6,7 +6,7 @@ import numpy as np
 import vector
 from omegaconf import OmegaConf
 
-from gabbro.data.loading import read_jetclass_file
+from gabbro.data.loading import read_jetclass_h5_file
 from gabbro.models.vqvae import VQVAELightning
 from gabbro.utils.jet_types import get_jet_type_from_file_prefix, jet_types_dict
 
@@ -46,7 +46,7 @@ def tokenize_jetclass_file(
     x_ak_original : ak.Array
         Array of the original particles.
     """
-    x_ak, _, _ = read_jetclass_file(
+    x_ak, _, _ = read_jetclass_h5_file(
         filename_in,
         particle_features=["part_pt", "part_etarel", "part_phirel"],
         jet_features=None,
@@ -55,7 +55,7 @@ def tokenize_jetclass_file(
 
     # --- Model and config loading ---
     ckpt_path = Path(model_ckpt_path)
-    config_path = ckpt_path.parent.parent / "config.yaml"
+    config_path = ckpt_path.parent / "config.yaml"
     cfg = OmegaConf.load(config_path)
     logger.info(f"Loaded config from {config_path}")
     model = VQVAELightning.load_from_checkpoint(ckpt_path)
@@ -100,6 +100,91 @@ def tokenize_jetclass_file(
 
     return tokens_int, p4s_original, x_ak
 
+# for h5
+def tokenize_jetclass_h5_file(
+    filename_in: str,
+    model_ckpt_path: str,
+    filename_out: str = None,
+    add_start_end_tokens: bool = False,
+    print_model: bool = False,
+):
+    """Tokenize a single file using a trained model.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file to be tokenized.
+    model_ckpt_path : str
+        Path to the model checkpoint.
+    filename_out : str, optional
+        Path to the output file.
+    add_start_end_tokens : bool, optional
+        Whether to add start and end tokens to the tokenized sequence.
+    print_model : bool, optional
+        Whether to print the model architecture.
+
+    Returns
+    -------
+    tokens_int : ak.Array
+        Array of tokens.
+    p4s_original : ak.Array
+        Momentum4D array of the original particles.
+    x_ak_original : ak.Array
+        Array of the original particles.
+    """
+    x_ak, _, _ = read_jetclass_h5_file(
+        filename_in,
+        particle_features=["part_pt", "part_etarel", "part_phirel"],
+        jet_features=["jet_pt", "jet_eta", "jet_phi", "jet_sdmass"],
+        return_p4=False,
+    )
+
+    # --- Model and config loading ---
+    ckpt_path = Path(model_ckpt_path)
+    config_path = ckpt_path.parent / "config.yaml"
+    cfg = OmegaConf.load(config_path)
+    logger.info(f"Loaded config from {config_path}")
+    model = VQVAELightning.load_from_checkpoint(ckpt_path)
+    if print_model:
+        print(model)
+    pp_dict = cfg.data.dataset_kwargs_common["feature_dict"]
+    logger.info("Preprocessing dictionary:")
+    for key, value in pp_dict.items():
+        logger.info(f" | {key}: {value}")
+
+    model = model.to("cuda")
+    model.eval()
+    # --------------------------------
+
+    p4s_original = ak.zip(
+        {
+            "pt": x_ak.part_pt,
+            "eta": x_ak.part_etarel,
+            "phi": x_ak.part_phirel,
+            "mass": ak.zeros_like(x_ak.part_pt),
+        },
+        with_name="Momentum4D",
+    )
+    tokens = model.tokenize_ak_array(x_ak, pp_dict)
+
+    if add_start_end_tokens:
+        n_tokens = model.model.vqlayer.num_codes
+        tokens = ak.concatenate(
+            [
+                ak.zeros_like(tokens[:, :1]),  # start token is 0
+                tokens + 1,
+                ak.ones_like(tokens[:, :1]) + n_tokens,  # end token is n_tokens + 1
+            ],
+            axis=1,
+        )
+
+    tokens_int = ak.values_astype(tokens, int)
+
+    if filename_out is not None:
+        logger.info(f"Saving tokenized file to {filename_out}")
+        ak.to_parquet(tokens_int, filename_out)
+
+    return tokens_int, p4s_original, x_ak
 
 def reconstruct_jetclass_file(
     filename_in: str,

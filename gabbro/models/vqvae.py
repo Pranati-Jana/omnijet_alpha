@@ -544,6 +544,9 @@ class VQVAELightning(L.LightningModule):
                 code = vq_out["q"]
                 codes.append(code)
         codes = torch.cat(codes, dim=0).detach().cpu().numpy()
+        print("All codes shape:", codes.shape)
+        print("Total tokens:", codes.size)
+        print("Tokens per sample:", codes.shape[1])
         mask = mask.detach().cpu().numpy()
         tokens = np_to_ak(codes, names=["token"], mask=mask)["token"]
         return tokens

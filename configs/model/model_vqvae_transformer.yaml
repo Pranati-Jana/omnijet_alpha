@@ -10,7 +10,7 @@ model_kwargs:
   num_heads: 8
   alpha: 5
   vq_kwargs:
-    num_codes: 2048
+    num_codes: 8192
     beta: 0.9
     kmeans_init: true
     norm: null

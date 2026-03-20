@@ -6,7 +6,7 @@ from pathlib import Path
 
 import dotenv
 
-from gabbro.data.data_tokenization import tokenize_jetclass_file
+from gabbro.data.data_tokenization import tokenize_jetclass_h5_file
 from gabbro.utils.pylogger import get_pylogger
 
 log = get_pylogger(__name__)
@@ -27,7 +27,6 @@ parser.add_argument("--dry_run", action="store_true")
 
 def main(
     ckpt_path,
-    jet_types,
     n_files_train,
     n_files_val,
     n_files_test,
@@ -55,18 +54,18 @@ def main(
     log.info(f"Using checkpoint: {ckpt_path}")
 
     JETCLASS_DIR = dotenv.dotenv_values()["JETCLASS_DIR"]
-    JETCLASS_DIR_TRAIN = Path(JETCLASS_DIR) / "train_100M"
-    JETCLASS_DIR_VAL = Path(JETCLASS_DIR) / "val_5M"
-    JETCLASS_DIR_TEST = Path(JETCLASS_DIR) / "test_20M"
+    JETCLASS_DIR_TRAIN = Path(JETCLASS_DIR) 
+    JETCLASS_DIR_VAL = Path(JETCLASS_DIR) 
+    JETCLASS_DIR_TEST = Path(JETCLASS_DIR) 
 
 
     JETCLASS_DIR_TOKENIZED = Path(dotenv.dotenv_values()["JETCLASS_DIR_TOKENIZED"])
     run_id = Path(ckpt_path).parent.parent.name
     JETCLASS_DIR_TOKENIZED = JETCLASS_DIR_TOKENIZED / (str(run_id) + output_suffix)
     
-    JETCLASS_DIR_TOKENIZED_TRAIN = JETCLASS_DIR_TOKENIZED / "train_100M"
-    JETCLASS_DIR_TOKENIZED_VAL = JETCLASS_DIR_TOKENIZED / "val_5M"
-    JETCLASS_DIR_TOKENIZED_TEST = JETCLASS_DIR_TOKENIZED / "test_20M"
+    JETCLASS_DIR_TOKENIZED_TRAIN = JETCLASS_DIR_TOKENIZED / "train"
+    JETCLASS_DIR_TOKENIZED_VAL = JETCLASS_DIR_TOKENIZED / "val"
+    JETCLASS_DIR_TOKENIZED_TEST = JETCLASS_DIR_TOKENIZED / "test"
 
     # raise error if tokenized dir already exists
     if JETCLASS_DIR_TOKENIZED.exists():
@@ -85,14 +84,14 @@ def main(
     files_val = []
     files_test = []
 
-    for jt in jet_types:
-        wildcard_train = f"{JETCLASS_DIR_TRAIN}/{jt}*.root"
-        wildcard_val = f"{JETCLASS_DIR_VAL}/{jt}*.root"
-        wildcard_test = f"{JETCLASS_DIR_TEST}/{jt}*.root"
 
-        files_train.extend(sorted(list(glob.glob(wildcard_train)))[:n_files_train])
-        files_val.extend(sorted(list(glob.glob(wildcard_val)))[:n_files_val])
-        files_test.extend(sorted(list(glob.glob(wildcard_test)))[:n_files_test])
+    wildcard_train = f"{JETCLASS_DIR_TRAIN}/*.h5"
+    wildcard_val = f"{JETCLASS_DIR_VAL}/*.h5"
+    wildcard_test = f"{JETCLASS_DIR_TEST}/*.h5"
+
+    files_train.extend(sorted(list(glob.glob(wildcard_train)))[:n_files_train])
+    files_val.extend(sorted(list(glob.glob(wildcard_val)))[:n_files_val])
+    files_test.extend(sorted(list(glob.glob(wildcard_test)))[:n_files_test])
 
     log.info(f"Found {len(files_train)} train files:")
     for f in files_train:
@@ -117,7 +116,7 @@ def main(
 
     # copy the checkpoint to the tokenized dir
     os.system(f"cp {ckpt_path} {JETCLASS_DIR_TOKENIZED}")  # nosec
-    os.system(f"cp {ckpt_path} {JETCLASS_DIR_TOKENIZED}/model_ckpt.ckpt")  # nosec
+    os.system(f"cp {ckpt_path} {JETCLASS_DIR_TOKENIZED}/last.ckpt")  # nosec
     cfg_path = Path(ckpt_path).parent / "config.yaml"
     os.system(f"cp {cfg_path} {JETCLASS_DIR_TOKENIZED}")  # nosec
 
@@ -125,12 +124,12 @@ def main(
         for i, filename_in in enumerate(files):
             log.info(f"{stage} file {i + 1}/{len(files)}")
             filename_out = Path(out_dirs[stage]) / Path(filename_in).name.replace(
-                ".root", "_tokenized.parquet"
+                ".h5", "_tokenized.parquet"
             )
             log.info("Input file: %s", filename_in)
             log.info("Output file: %s", filename_out)
             log.info("---")
-            tokenize_jetclass_file(
+            tokenize_jetclass_h5_file(
                 filename_in=filename_in,
                 model_ckpt_path=ckpt_path,
                 filename_out=filename_out,
@@ -141,7 +140,6 @@ def main(
 if __name__ == "__main__":
     args = parser.parse_args()
     ckpt_path = args.ckpt_path
-    # jet_types = ["TTBar_", "ZJetsToNuNu_"]
     jet_types = [
         "ZJetsToNuNu_",
         "HToBB_",
@@ -161,7 +159,6 @@ if __name__ == "__main__":
     if args.dry_run:
         log.info("Dry run - not actually running tokenization")
         log.info(f"Using checkpoint: {ckpt_path}")
-        log.info(f"Jet types: {jet_types}")
         log.info(f"Output suffix: {output_suffix}")
         log.info(f"n_files_train: {n_files_train}")
         log.info(f"n_files_val: {n_files_val}")
@@ -169,7 +166,6 @@ if __name__ == "__main__":
         exit(0)
     main(
         ckpt_path,
-        jet_types,
         n_files_train,
         n_files_val,
         n_files_test,
