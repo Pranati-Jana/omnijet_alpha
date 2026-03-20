@@ -198,7 +198,7 @@ class TokenizationEvalCallback(L.Callback):
 
         fig, axarr = plot_features(
             ak_array_dict={
-                "Truth": p4s_jets_original_ak,
+                "Aspen Open jet dataset": p4s_jets_original_ak,
                 "Reco": p4s_jets_reco_ak,
             },
             names={feat: default_labels[feat] for feat in ["pt", "eta", "phi", "mass"]},
@@ -220,7 +220,12 @@ class TokenizationEvalCallback(L.Callback):
         fig_part_etares, axarr_part_etares = plt.subplots(2, 5, figsize=(12, 4))
         fig_part_phires, axarr_part_phires = plt.subplots(2, 5, figsize=(12, 4))
         fig_part_massres, axarr_part_massres = plt.subplots(2, 5, figsize=(12, 4))
-
+        # Adding jet phi and jet eta
+        fig_phi, axarr_phi = plt.subplots(2, 5, figsize=(12, 4))
+        fig_phires, axarr_phires = plt.subplots(2, 5, figsize=(12, 4))
+        fig_eta, axarr_eta = plt.subplots(2, 5, figsize=(12, 4))
+        fig_etares, axarr_etares = plt.subplots(2, 5, figsize=(12, 4))
+        #
         axarr_mass = axarr_mass.flatten()
         axarr_massres = axarr_massres.flatten()
         axarr_pt = axarr_pt.flatten()
@@ -233,7 +238,12 @@ class TokenizationEvalCallback(L.Callback):
         axarr_part_etares = axarr_part_etares.flatten()
         axarr_part_phires = axarr_part_phires.flatten()
         axarr_part_massres = axarr_part_massres.flatten()
-
+        #Adding jet phi and jet eta
+        axarr_phi = axarr_phi.flatten()
+        axarr_eta = axarr_eta.flatten()
+        axarr_phires = axarr_phires.flatten()
+        axarr_etares = axarr_etares.flatten()
+        
         # calculate jet substructure if in test stage (takes some time, so only do it for val stage)
         jet_substructure_original = JetSubstructure(p4s_original_ak)
         jet_substructure_reco = JetSubstructure(p4s_reco_ak)
@@ -270,7 +280,7 @@ class TokenizationEvalCallback(L.Callback):
             hist_kwargs = dict(density=True, color=jet_type_dict["color"])
             hist_kwargs_truth = hist_kwargs | dict(
                 alpha=0.4,
-                label="Truth",
+                label="Aspen Open jet dataset",
                 histtype="stepfilled",
             )
             hist_kwargs_reco = hist_kwargs | dict(
@@ -380,7 +390,47 @@ class TokenizationEvalCallback(L.Callback):
             )
             ax.set_xlabel("Jet $p_\\mathrm{T}$ diff. to truth [GeV]")
             ax.set_title(jet_type_dict["tex_label"])
+            #Adding jet phi and eta #######
+            #phi
+            ax = axarr_phi[i]
+            bins = np.linspace(-0.8, 0.8, 54)
+            ax.hist(np.clip(p4s_jets_original_ak_i.phi, -0.8, 0.8), bins=bins, **hist_kwargs_truth)
+            ax.hist(np.clip(p4s_jets_reco_ak_i.phi, -0.8, 0.8), bins=bins, **hist_kwargs_reco)
+            ax.set_xlabel("Jet $\\phi$")
+            ax.legend(frameon=False, loc="upper right")
+            ax.set_title(jet_type_dict["tex_label"])
 
+            # plot jet phi difference between reco and truth
+            ax = axarr_phires[i]
+            ax.hist(
+                np.clip(p4s_jets_reco_ak_i.phi - p4s_jets_original_ak_i.phi, -0.8, 0.8),
+                bins=np.linspace(-0.8, 0.8, 54),
+                histtype="step",
+                **hist_kwargs,
+            )
+            ax.set_xlabel("Jet $\\phi$ diff. to truth")
+            ax.set_title(jet_type_dict["tex_label"])
+
+            #eta
+            ax = axarr_eta[i]
+            bins = np.linspace(-0.8, 0.8, 54)
+            ax.hist(np.clip(p4s_jets_original_ak_i.eta, -0.8, 0.8), bins=bins, **hist_kwargs_truth)
+            ax.hist(np.clip(p4s_jets_reco_ak_i.eta, -0.8, 0.8), bins=bins, **hist_kwargs_reco)
+            ax.set_xlabel("Jet $\\eta$")
+            ax.legend(frameon=False, loc="upper right")
+            ax.set_title(jet_type_dict["tex_label"])
+
+            # plot jet eta difference between reco and truth
+            ax = axarr_etares[i]
+            ax.hist(
+                np.clip(p4s_jets_reco_ak_i.eta - p4s_jets_original_ak_i.eta, -0.8, 0.8),
+                bins=np.linspace(-0.8, 0.8, 54),
+                histtype="step",
+                **hist_kwargs,
+            )
+            ax.set_xlabel("Jet $\\eta$ diff. to truth")
+            ax.set_title(jet_type_dict["tex_label"])
+            
             # --------------- Particle-level plots -------------------
             # plot the particle pt difference between reco and truth
             ax = axarr_part_ptres[i]
@@ -443,6 +493,11 @@ class TokenizationEvalCallback(L.Callback):
         fig_part_etares.suptitle("Particle $\\eta^\\mathrm{rel}$ difference between reco and truth", **title_kwargs)
         fig_part_phires.suptitle("Particle $\\phi^\\mathrm{rel}$ difference between reco and truth", **title_kwargs)
         fig_part_massres.suptitle("Particle mass difference between reco and truth", **title_kwargs)
+        #Adding jet phi and eta
+        fig_phi.suptitle("Jet #phi", **title_kwargs)
+        fig_phires.suptitle("Jet #phi difference between reco and truth", **title_kwargs)
+        fig_eta.suptitle("Jet #eta", **title_kwargs)
+        fig_etares.suptitle("Jet #eta difference between reco and truth", **title_kwargs)
         # fmt: on
 
         fig_mass.tight_layout()
@@ -457,6 +512,12 @@ class TokenizationEvalCallback(L.Callback):
         fig_tau32.tight_layout()
         fig_tau21res.tight_layout()
         fig_tau32res.tight_layout()
+        #Adding jet phi and eta
+        fig_phi.tight_layout()
+        fig_phires.tight_layout()
+        fig_eta.tight_layout()
+        fig_etares.tight_layout()
+        
         rep = "_overview"
         filename_mass_jet_types = plot_filename.replace(rep, "_jet_types_mass")
         filename_massres_jet_types = plot_filename.replace(rep, "_jet_types_massres")
@@ -470,6 +531,12 @@ class TokenizationEvalCallback(L.Callback):
         filename_part_etares_jet_types = plot_filename.replace(rep, "_jet_types_part_etares")
         filename_part_phires_jet_types = plot_filename.replace(rep, "_jet_types_part_phires")
         filename_part_massres_jet_types = plot_filename.replace(rep, "_jet_types_part_massres")
+        #Adding jet phi and eta
+        filename_phi_jet_types = plot_filename.replace(rep, "_jet_types_phi")
+        filename_phires_jet_types = plot_filename.replace(rep, "_jet_types_phires")
+        filename_eta_jet_types = plot_filename.replace(rep, "_jet_types_eta")
+        filename_etares_jet_types = plot_filename.replace(rep, "_jet_types_etares")
+        
         fig_mass.savefig(filename_mass_jet_types)
         fig_massres.savefig(filename_massres_jet_types)
         fig_pt.savefig(filename_pt_jet_types)
@@ -482,6 +549,12 @@ class TokenizationEvalCallback(L.Callback):
         fig_part_etares.savefig(filename_part_etares_jet_types)
         fig_part_phires.savefig(filename_part_phires_jet_types)
         fig_part_massres.savefig(filename_part_massres_jet_types)
+        #Adding jet phi and eta
+        fig_phi.savefig(filename_phi_jet_types)
+        fig_phires.savefig(filename_phires_jet_types)
+        fig_eta.savefig(filename_eta_jet_types)
+        fig_etares.savefig(filename_etares_jet_types)
+        
 
         # log the plots
         if self.comet_logger is not None:
@@ -499,6 +572,11 @@ class TokenizationEvalCallback(L.Callback):
                 filename_part_etares_jet_types,
                 filename_part_phires_jet_types,
                 filename_part_massres_jet_types,
+                #Adding jet phi and eta
+                filename_phi_jet_types,
+                filename_phires_jet_types,
+                filename_eta_jet_types,
+                filename_etares_jet_types,
             ]:
                 self.comet_logger.log_image(
                     fname, name=fname.split("/")[-1], step=trainer.global_step
