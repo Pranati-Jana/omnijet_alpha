@@ -17,4 +17,4 @@ dataset_kwargs_test:
   seed_shuffle_data: 42
 
 batch_size: 128
-data_dir: /beegfs/desy/user/birkjosc/datasets/jetclass_history_v1/
+data_dir: /global/cfs/cdirs/m2612/treasure/datasets/Event_level_dataset/H5_maker_ZeroBias_2016G

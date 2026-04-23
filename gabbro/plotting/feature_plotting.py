@@ -303,7 +303,9 @@ def plot_features(
         bins_dict = {}
     # loop over all names - if the name is not in the bins_dict, use the default bins
     for name in names:
-        if name not in bins_dict:
+        if name in ["eta", "phi"]:
+            bins_dict[name] = np.linspace(-10, 10, 200)
+        else:
             bins_dict[name] = histkwargs["bins"]
 
     # remove default bins from histkwargs

@@ -48,7 +48,7 @@ def tokenize_jetclass_file(
     """
     x_ak, _, _ = read_jetclass_h5_file(
         filename_in,
-        particle_features=["part_pt", "part_etarel", "part_phirel"],
+        particle_features=["part_pt", "part_eta", "part_phi"],
         jet_features=None,
         return_p4=False,
     )
@@ -73,8 +73,8 @@ def tokenize_jetclass_file(
     p4s_original = ak.zip(
         {
             "pt": x_ak.part_pt,
-            "eta": x_ak.part_etarel,
-            "phi": x_ak.part_phirel,
+            "eta": x_ak.part_eta,
+            "phi": x_ak.part_phi,
             "mass": ak.zeros_like(x_ak.part_pt),
         },
         with_name="Momentum4D",
@@ -134,8 +134,9 @@ def tokenize_jetclass_h5_file(
     """
     x_ak, _, _ = read_jetclass_h5_file(
         filename_in,
-        particle_features=["part_pt", "part_etarel", "part_phirel"],
-        jet_features=["jet_pt", "jet_eta", "jet_phi", "jet_sdmass"],
+        particle_features=["part_pt", "part_eta", "part_phi"],
+        #jet_features=["jet_pt", "jet_eta", "jet_phi", "jet_sdmass"],
+        
         return_p4=False,
     )
 
@@ -159,8 +160,8 @@ def tokenize_jetclass_h5_file(
     p4s_original = ak.zip(
         {
             "pt": x_ak.part_pt,
-            "eta": x_ak.part_etarel,
-            "phi": x_ak.part_phirel,
+            "eta": x_ak.part_eta,
+            "phi": x_ak.part_phi,
             "mass": ak.zeros_like(x_ak.part_pt),
         },
         with_name="Momentum4D",
@@ -267,10 +268,14 @@ def reconstruct_jetclass_file(
 
     p4s_reco = ak.zip(
         {
-            "pt": x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt,
-            "eta": x_reco_ak.etarel if "etarel" in x_reco_ak.fields else x_reco_ak.part_etarel,
-            "phi": x_reco_ak.phirel if "phirel" in x_reco_ak.fields else x_reco_ak.part_phirel,
-            "mass": ak.zeros_like(x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt),
+            # "pt": x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt,
+            # "eta": x_reco_ak.etarel if "etarel" in x_reco_ak.fields else x_reco_ak.part_eta,
+            # "phi": x_reco_ak.phirel if "phirel" in x_reco_ak.fields else x_reco_ak.part_phi,
+            # "mass": ak.zeros_like(x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt),
+            "pt": x_reco_ak.part_pt,
+            "eta": x_reco_ak.part_eta,
+            "phi": x_reco_ak.part_phi,
+            "mass": ak.zeros_like(x_reco_ak.part_pt),
         },
         with_name="Momentum4D",
     )

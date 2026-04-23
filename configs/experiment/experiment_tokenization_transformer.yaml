@@ -37,10 +37,10 @@ data:
     feature_dict:
       part_pt: {multiply_by: 1, subtract_by: 1.8, func: "np.log", inv_func: "np.exp"}
       # part_pt: {multiply_by: 0.05, subtract_by: 12}
-      part_etarel: {multiply_by: 3, larger_than: -0.8, smaller_than: 0.8}
-      part_phirel: {multiply_by: 3, larger_than: -0.8, smaller_than: 0.8}
-      # part_eta: {}
-      # part_phi: {}
+      # part_etarel: {multiply_by: 3, larger_than: -0.8, smaller_than: 0.8}
+      # part_phirel: {multiply_by: 3, larger_than: -0.8, smaller_than: 0.8}
+      part_eta: {multiply_by: 1}
+      part_phi: {multiply_by: 1}
       # part_d0val: {func: "np.tanh", inv_func: "np.arctanh"}
       # part_dzval: {func: "np.tanh", inv_func: "np.arctanh"}
 

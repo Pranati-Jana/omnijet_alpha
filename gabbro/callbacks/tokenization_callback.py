@@ -198,16 +198,16 @@ class TokenizationEvalCallback(L.Callback):
 
         fig, axarr = plot_features(
             ak_array_dict={
-                "Aspen Open jet dataset": p4s_jets_original_ak,
+                "Zero Bias dataset": p4s_jets_original_ak,
                 "Reco": p4s_jets_reco_ak,
             },
             names={feat: default_labels[feat] for feat in ["pt", "eta", "phi", "mass"]},
-            label_prefix="Jet",
+            label_prefix="Particle",
             flatten=False,
         )
         fig.savefig(plot_filename)
 
-        # make jet mass plot for all jet types
+        # make Particle mass plot 
         fig_mass, axarr_mass = plt.subplots(2, 5, figsize=(12, 4))
         fig_massres, axarr_massres = plt.subplots(2, 5, figsize=(12, 4))
         fig_pt, axarr_pt = plt.subplots(2, 5, figsize=(12, 4))
@@ -280,7 +280,7 @@ class TokenizationEvalCallback(L.Callback):
             hist_kwargs = dict(density=True, color=jet_type_dict["color"])
             hist_kwargs_truth = hist_kwargs | dict(
                 alpha=0.4,
-                label="Aspen Open jet dataset",
+                label="ZeroBias dataset",
                 histtype="stepfilled",
             )
             hist_kwargs_reco = hist_kwargs | dict(
@@ -355,7 +355,7 @@ class TokenizationEvalCallback(L.Callback):
             bins = np.linspace(0, 250, 70)
             ax.hist(np.clip(p4s_jets_original_ak_i.mass, 0, 250), bins=bins, **hist_kwargs_truth)
             ax.hist(np.clip(p4s_jets_reco_ak_i.mass, 0, 250), bins=bins, **hist_kwargs_reco)
-            ax.set_xlabel("Jet mass [GeV]")
+            ax.set_xlabel("Particle mass [GeV]")
             ax.legend(frameon=False, loc="upper right")
             ax.set_title(jet_type_dict["tex_label"])
 
@@ -367,7 +367,7 @@ class TokenizationEvalCallback(L.Callback):
                 histtype="step",
                 **hist_kwargs,
             )
-            ax.set_xlabel("Jet mass diff. to truth [GeV]")
+            ax.set_xlabel("Particle mass diff. to truth [GeV]")
             ax.set_title(jet_type_dict["tex_label"])
 
             # plot jet pt
@@ -375,7 +375,7 @@ class TokenizationEvalCallback(L.Callback):
             bins = np.linspace(450, 1050, 70)
             ax.hist(np.clip(p4s_jets_original_ak_i.pt, 450, 1050), bins=bins, **hist_kwargs_truth)
             ax.hist(np.clip(p4s_jets_reco_ak_i.pt, 450, 1050), bins=bins, **hist_kwargs_reco)
-            ax.set_xlabel("Jet $p_\\mathrm{T}$ [GeV]")
+            ax.set_xlabel("Particle $p_\\mathrm{T}$ [GeV]")
             ax.set_title(jet_type_dict["tex_label"])
             ax.legend(frameon=False, loc="upper right")
 
@@ -388,7 +388,7 @@ class TokenizationEvalCallback(L.Callback):
                 histtype="step",
                 **hist_kwargs,
             )
-            ax.set_xlabel("Jet $p_\\mathrm{T}$ diff. to truth [GeV]")
+            ax.set_xlabel("Particle $p_\\mathrm{T}$ diff. to truth [GeV]")
             ax.set_title(jet_type_dict["tex_label"])
             #Adding jet phi and eta #######
             #phi
@@ -396,7 +396,7 @@ class TokenizationEvalCallback(L.Callback):
             bins = np.linspace(-0.8, 0.8, 54)
             ax.hist(np.clip(p4s_jets_original_ak_i.phi, -0.8, 0.8), bins=bins, **hist_kwargs_truth)
             ax.hist(np.clip(p4s_jets_reco_ak_i.phi, -0.8, 0.8), bins=bins, **hist_kwargs_reco)
-            ax.set_xlabel("Jet $\\phi$")
+            ax.set_xlabel("Particle $\\phi$")
             ax.legend(frameon=False, loc="upper right")
             ax.set_title(jet_type_dict["tex_label"])
 
@@ -408,7 +408,7 @@ class TokenizationEvalCallback(L.Callback):
                 histtype="step",
                 **hist_kwargs,
             )
-            ax.set_xlabel("Jet $\\phi$ diff. to truth")
+            ax.set_xlabel("Particle $\\phi$ diff. to truth")
             ax.set_title(jet_type_dict["tex_label"])
 
             #eta
@@ -416,7 +416,7 @@ class TokenizationEvalCallback(L.Callback):
             bins = np.linspace(-0.8, 0.8, 54)
             ax.hist(np.clip(p4s_jets_original_ak_i.eta, -0.8, 0.8), bins=bins, **hist_kwargs_truth)
             ax.hist(np.clip(p4s_jets_reco_ak_i.eta, -0.8, 0.8), bins=bins, **hist_kwargs_reco)
-            ax.set_xlabel("Jet $\\eta$")
+            ax.set_xlabel("Particle $\\eta$")
             ax.legend(frameon=False, loc="upper right")
             ax.set_title(jet_type_dict["tex_label"])
 
@@ -428,7 +428,7 @@ class TokenizationEvalCallback(L.Callback):
                 histtype="step",
                 **hist_kwargs,
             )
-            ax.set_xlabel("Jet $\\eta$ diff. to truth")
+            ax.set_xlabel("Particle $\\eta$ diff. to truth")
             ax.set_title(jet_type_dict["tex_label"])
             
             # --------------- Particle-level plots -------------------
@@ -481,23 +481,23 @@ class TokenizationEvalCallback(L.Callback):
 
         # fmt: off
         title_kwargs = dict(fontsize=16)
-        fig_mass.suptitle("Jet mass", **title_kwargs)
-        fig_massres.suptitle("Jet mass difference between reco and truth", **title_kwargs)
-        fig_pt.suptitle("Jet $p_\\mathrm{T}$", **title_kwargs)
-        fig_ptres.suptitle("Jet $p_\\mathrm{T}$ difference between reco and truth", **title_kwargs)
-        fig_tau21.suptitle("Jet $\\tau_{21}$", **title_kwargs)
-        fig_tau32.suptitle("Jet $\\tau_{32}$", **title_kwargs)
-        fig_tau21res.suptitle("Jet $\\tau_{21}$ difference between reco and truth", **title_kwargs)
-        fig_tau32res.suptitle("Jet $\\tau_{32}$ difference between reco and truth", **title_kwargs)
+        fig_mass.suptitle("Particle mass", **title_kwargs)
+        fig_massres.suptitle("Particle mass difference between reco and truth", **title_kwargs)
+        fig_pt.suptitle("Particle $p_\\mathrm{T}$", **title_kwargs)
+        fig_ptres.suptitle("Particle $p_\\mathrm{T}$ difference between reco and truth", **title_kwargs)
+        fig_tau21.suptitle("Particle $\\tau_{21}$", **title_kwargs)
+        fig_tau32.suptitle("Particle $\\tau_{32}$", **title_kwargs)
+        fig_tau21res.suptitle("Particle $\\tau_{21}$ difference between reco and truth", **title_kwargs)
+        fig_tau32res.suptitle("Particle $\\tau_{32}$ difference between reco and truth", **title_kwargs)
         fig_part_ptres.suptitle("Particle $p_\\mathrm{T}$ difference between reco and truth", **title_kwargs)
         fig_part_etares.suptitle("Particle $\\eta^\\mathrm{rel}$ difference between reco and truth", **title_kwargs)
         fig_part_phires.suptitle("Particle $\\phi^\\mathrm{rel}$ difference between reco and truth", **title_kwargs)
         fig_part_massres.suptitle("Particle mass difference between reco and truth", **title_kwargs)
         #Adding jet phi and eta
-        fig_phi.suptitle("Jet #phi", **title_kwargs)
-        fig_phires.suptitle("Jet #phi difference between reco and truth", **title_kwargs)
-        fig_eta.suptitle("Jet #eta", **title_kwargs)
-        fig_etares.suptitle("Jet #eta difference between reco and truth", **title_kwargs)
+        fig_phi.suptitle("Particle #phi", **title_kwargs)
+        fig_phires.suptitle("Particle #phi difference between reco and truth", **title_kwargs)
+        fig_eta.suptitle("Particle #eta", **title_kwargs)
+        fig_etares.suptitle("Particle #eta difference between reco and truth", **title_kwargs)
         # fmt: on
 
         fig_mass.tight_layout()
@@ -519,23 +519,23 @@ class TokenizationEvalCallback(L.Callback):
         fig_etares.tight_layout()
         
         rep = "_overview"
-        filename_mass_jet_types = plot_filename.replace(rep, "_jet_types_mass")
-        filename_massres_jet_types = plot_filename.replace(rep, "_jet_types_massres")
-        filename_pt_jet_types = plot_filename.replace(rep, "_jet_types_pt")
-        filename_ptres_jet_types = plot_filename.replace(rep, "_jet_types_ptres")
-        filename_tau21_jet_types = plot_filename.replace(rep, "_jet_types_tau21")
-        filename_tau32_jet_types = plot_filename.replace(rep, "_jet_types_tau32")
-        filename_tau21res_jet_types = plot_filename.replace(rep, "_jet_types_tau21res")
-        filename_tau32res_jet_types = plot_filename.replace(rep, "_jet_types_tau32res")
-        filename_part_ptres_jet_types = plot_filename.replace(rep, "_jet_types_part_ptres")
-        filename_part_etares_jet_types = plot_filename.replace(rep, "_jet_types_part_etares")
-        filename_part_phires_jet_types = plot_filename.replace(rep, "_jet_types_part_phires")
-        filename_part_massres_jet_types = plot_filename.replace(rep, "_jet_types_part_massres")
+        filename_mass_jet_types = plot_filename.replace(rep, "_Particle_mass")
+        filename_massres_jet_types = plot_filename.replace(rep, "_Particle_massres")
+        filename_pt_jet_types = plot_filename.replace(rep, "_Particle_pt")
+        filename_ptres_jet_types = plot_filename.replace(rep, "_Particle_ptres")
+        filename_tau21_jet_types = plot_filename.replace(rep, "_Particle_tau21")
+        filename_tau32_jet_types = plot_filename.replace(rep, "_Particle_tau32")
+        filename_tau21res_jet_types = plot_filename.replace(rep, "_Particle_tau21res")
+        filename_tau32res_jet_types = plot_filename.replace(rep, "_Particle_tau32res")
+        filename_part_ptres_jet_types = plot_filename.replace(rep, "_Particle_part_ptres")
+        filename_part_etares_jet_types = plot_filename.replace(rep, "_Particle_part_etares")
+        filename_part_phires_jet_types = plot_filename.replace(rep, "_Particle_part_phires")
+        filename_part_massres_jet_types = plot_filename.replace(rep, "_Particle_part_massres")
         #Adding jet phi and eta
-        filename_phi_jet_types = plot_filename.replace(rep, "_jet_types_phi")
-        filename_phires_jet_types = plot_filename.replace(rep, "_jet_types_phires")
-        filename_eta_jet_types = plot_filename.replace(rep, "_jet_types_eta")
-        filename_etares_jet_types = plot_filename.replace(rep, "_jet_types_etares")
+        filename_phi_jet_types = plot_filename.replace(rep, "_Particle_phi")
+        filename_phires_jet_types = plot_filename.replace(rep, "_Particle_phires")
+        filename_eta_jet_types = plot_filename.replace(rep, "_Particle_eta")
+        filename_etares_jet_types = plot_filename.replace(rep, "_Particle_etares")
         
         fig_mass.savefig(filename_mass_jet_types)
         fig_massres.savefig(filename_massres_jet_types)

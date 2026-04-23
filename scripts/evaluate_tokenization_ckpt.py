@@ -116,10 +116,14 @@ def main(ckpt_path, n_eval, dev):
 
     p4s_original = ak.zip(
         {
-            "pt": x_ak.pt if "pt" in x_ak.fields else x_ak.part_pt,
-            "eta": x_ak.etarel if "etarel" in x_ak.fields else x_ak.part_etarel,
-            "phi": x_ak.phirel if "phirel" in x_ak.fields else x_ak.part_phirel,
-            "mass": ak.zeros_like(x_ak.pt if "pt" in x_ak.fields else x_ak.part_pt),
+            # "pt": x_ak.pt if "pt" in x_ak.fields else x_ak.part_pt,
+            # "eta": x_ak.etarel if "etarel" in x_ak.fields else x_ak.part_etarel,
+            # "phi": x_ak.phirel if "phirel" in x_ak.fields else x_ak.part_phirel,
+            # "mass": ak.zeros_like(x_ak.pt if "pt" in x_ak.fields else x_ak.part_pt),
+            "pt": x_ak.part_pt,
+            "eta": x_ak.part_eta,
+            "phi": x_ak.part_phi,
+            "mass": ak.zeros_like(x_ak.part_pt),
         },
         with_name="Momentum4D",
     )
@@ -132,11 +136,15 @@ def main(ckpt_path, n_eval, dev):
     x_reco_ak = model.reconstruct_ak_tokens(tokens, pp_dict, hide_pbar=True)
     p4s_reco = ak.zip(
         {
-            "pt": x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt,
-            "eta": x_reco_ak.etarel if "etarel" in x_reco_ak.fields else x_reco_ak.part_etarel,
-            # "eta": x_ak.etarel if "etarel" in x_ak.fields else x_ak.part_etarel,
-            "phi": x_reco_ak.phirel if "phirel" in x_reco_ak.fields else x_reco_ak.part_phirel,
-            "mass": ak.zeros_like(x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt),
+            "pt": x_reco_ak.part_pt,
+            "eta": x_reco_ak.part_eta,
+            "phi": x_reco_ak.part_phi,
+            "mass": ak.zeros_like(x_reco_ak.part_pt),
+            # "pt": x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt,
+            # "eta": x_reco_ak.etarel if "etarel" in x_reco_ak.fields else x_reco_ak.part_etarel,
+            # # "eta": x_ak.etarel if "etarel" in x_ak.fields else x_ak.part_etarel,
+            # "phi": x_reco_ak.phirel if "phirel" in x_reco_ak.fields else x_reco_ak.part_phirel,
+            # "mass": ak.zeros_like(x_reco_ak.pt if "pt" in x_reco_ak.fields else x_reco_ak.part_pt),
         },
         with_name="Momentum4D",
     )
@@ -150,11 +158,25 @@ def main(ckpt_path, n_eval, dev):
     fig, axarr = plt.subplots(2, len(pp_dict.keys()), figsize=(11, 5))
     for i, feat_name in enumerate(pp_dict.keys()):
         ax = axarr[0, i]
-        hist_kw = dict(bins=100, alpha=0.8, density=True, histtype="step")
-        ax.hist(np.clip(ak.flatten(x_ak[feat_name]), -500, 500), label="original", **hist_kw)
+        hist_kw = dict(bins=200, alpha=0.8, density=True, histtype="step")
+        if feat_name in ["part_eta", "part_phi"]:
+            xmin, xmax = -10, 10
+        else:
+            xmin, xmax = -500, 500
         ax.hist(
-            np.clip(ak.flatten(x_reco_ak[feat_name]), -500, 500), label="reconstructed", **hist_kw
+        np.clip(ak.flatten(x_ak[feat_name]), xmin, xmax),
+        label="original",
+        **hist_kw
         )
+        ax.hist(
+        np.clip(ak.flatten(x_reco_ak[feat_name]), xmin, xmax),
+        label="reconstructed",
+        **hist_kw
+        )  
+        # ax.hist(np.clip(ak.flatten(x_ak[feat_name]), -500, 500), label="original", **hist_kw)
+        # ax.hist(
+        #     np.clip(ak.flatten(x_reco_ak[feat_name]), -500, 500), label="reconstructed", **hist_kw
+        # )
         ax.set_xlabel(feat_name)
         ax.legend()
         ax.set_yscale("log")
@@ -207,22 +229,22 @@ def main(ckpt_path, n_eval, dev):
 
     n_tokens_to_plot = len(perturbed_tokens_recos)
 
-    ax_etaphi.set_xlabel(plot_utils.get_label("part_etarel"), labelpad=3)
-    ax_etaphi.set_ylabel(plot_utils.get_label("part_phirel"), labelpad=0)
+    ax_etaphi.set_xlabel(plot_utils.get_label("part_eta"), labelpad=3)
+    ax_etaphi.set_ylabel(plot_utils.get_label("part_phi"), labelpad=0)
     ax_pteta.set_xlabel(plot_utils.get_label("part_pt"), labelpad=3)
-    ax_pteta.set_ylabel(plot_utils.get_label("part_etarel"), labelpad=0)
+    ax_pteta.set_ylabel(plot_utils.get_label("part_eta"), labelpad=0)
     ax_ptphi.set_xlabel(plot_utils.get_label("part_pt"), labelpad=3)
-    ax_ptphi.set_ylabel(plot_utils.get_label("part_phirel"), labelpad=0)
+    ax_ptphi.set_ylabel(plot_utils.get_label("part_phi"), labelpad=0)
 
     logger.info(f"Plotting {n_tokens_to_plot} perturbed tokens")
     for i_token, reco in enumerate(perturbed_tokens_recos[:n_tokens_to_plot]):
-        ax_etaphi.scatter(reco["part_etarel"][:, 0], reco["part_phirel"][:, 0], s=1, alpha=0.2)
-        ax_pteta.scatter(reco["part_pt"][:, 0], reco["part_etarel"][:, 0], s=1, alpha=0.2)
-        ax_ptphi.scatter(reco["part_pt"][:, 0], reco["part_phirel"][:, 0], s=1, alpha=0.2)
+        ax_etaphi.scatter(reco["part_eta"][:, 0], reco["part_phi"][:, 0], s=1, alpha=0.2)
+        ax_pteta.scatter(reco["part_pt"][:, 0], reco["part_eta"][:, 0], s=1, alpha=0.2)
+        ax_ptphi.scatter(reco["part_pt"][:, 0], reco["part_phi"][:, 0], s=1, alpha=0.2)
         if i_token in [0, 2, 5, 10, 100, n_tokens_to_plot - 1]:
-            etalim = 0.9
-            philim = 0.9
-            ptlim = 230
+            etalim = 10
+            philim = 10
+            ptlim = 150
             ax_etaphi.set_xlim(-etalim, etalim)
             ax_etaphi.set_ylim(-philim, philim + 0.15)
             ax_pteta.set_xlim(0, ptlim)
@@ -255,29 +277,29 @@ def main(ckpt_path, n_eval, dev):
     # ----------------------------------------------------------
     # --- PLOT: truth vs reco for jet features ---
 
-    logger.info("Plotting jet features")
+    logger.info("Plotting particle features")
 
     fig, axarr = plt.subplots(1, 5, figsize=(12, 2.4))
     ax = axarr[0]
     ax.hist(
-        ak.num(p4s_original), bins=np.linspace(0, 100, 101), density=True, color="C0", alpha=0.5
+        ak.num(p4s_original), bins=np.linspace(0, 200, 201), density=True, color="C0", alpha=0.5
     )
     ax.hist(
         ak.num(p4s_reco),
-        bins=np.linspace(0, 100, 101),
+        bins=np.linspace(0, 200, 201),
         histtype="step",
         density=True,
         color="C0",
     )
-    ax.set_xlabel("Number of particles per jet")
+    ax.set_xlabel("Number of particles")
 
     jets_original = ak.sum(p4s_original, axis=1)
     jets_reco = ak.sum(p4s_reco, axis=1)
 
     ax = axarr[1]
-    ax.hist(jets_original.pt, bins=60, density=True, color="C0", alpha=0.5, label="Aspen open JetData")
+    ax.hist(jets_original.pt, bins=60, density=True, color="C0", alpha=0.5, label="ZeroBias Data")
     ax.hist(jets_reco.pt, bins=60, histtype="step", density=True, color="C0", label="Reco")
-    ax.set_xlabel("Jet $p_T$ [GeV]")
+    ax.set_xlabel("Particle $p_T$ [GeV]")
 
     ax = axarr[2]
     bins = np.linspace(0, 250, 70)
@@ -287,7 +309,7 @@ def main(ckpt_path, n_eval, dev):
         density=True,
         alpha=0.5,
         color="C0",
-        label="Aspen open Data",
+        label="ZeroBias Data",
     )
     ax.hist(
         np.clip(jets_reco.mass, 0, 250),
@@ -297,21 +319,21 @@ def main(ckpt_path, n_eval, dev):
         color="C0",
         label="Reco",
     )
-    ax.set_xlabel("Jet mass [GeV]")
+    ax.set_xlabel("Particle mass [GeV]")
     #jet phi
     ax = axarr[3]
-    ax.hist(jets_original.phi, bins=60, density=True, color="C0", alpha=0.5, label="Aspen open JetData")
+    ax.hist(jets_original.phi, bins=60, density=True, color="C0", alpha=0.5, label="ZeroBias JetData")
     ax.hist(jets_reco.phi, bins=60, histtype="step", density=True, color="C0", label="Reco")
-    ax.set_xlabel("Jet $\\phi$")
+    ax.set_xlabel("Particle $\\phi$")
     ax = axarr[4]
-    ax.hist(jets_original.eta, bins=60, density=True, color="C0", alpha=0.5, label="Aspen open JetData")
+    ax.hist(jets_original.eta, bins=60, density=True, color="C0", alpha=0.5, label="ZeroBias JetData")
     ax.hist(jets_reco.eta, bins=60, histtype="step", density=True, color="C0", label="Reco")
-    ax.set_xlabel("Jet $\\eta$")
+    ax.set_xlabel("Particle $\\eta$")
     
     ax.legend(loc="upper right")
     fig.tight_layout()
     fig.set_dpi(300)
-    fig.savefig(out_plot_dir / "truth_vs_reco_jet_features.pdf")
+    fig.savefig(out_plot_dir / "truth_vs_reco_Particle.pdf")
 
     # ----------------------------------------------------------
     # --- PLOT: truth vs reco in eta-phi space (few examples) ---
@@ -327,7 +349,7 @@ def main(ckpt_path, n_eval, dev):
             p4s_original[i].eta,
             p4s_original[i].phi,
             s=p4s_original[i].pt,
-            label="Aspen open JetData",
+            label="ZeroBias Data",
             alpha=0.4,
             color="steelblue",
         )
@@ -340,8 +362,8 @@ def main(ckpt_path, n_eval, dev):
             color="red",
         )
         ax.legend(frameon=True)
-        ax.set_xlabel(plot_utils.get_label("part_etarel"))
-        ax.set_ylabel(plot_utils.get_label("part_phirel"))
+        ax.set_xlabel(plot_utils.get_label("part_eta"))
+        ax.set_ylabel(plot_utils.get_label("part_phi"))
     fig.tight_layout()
     fig.set_dpi(300)
     fig.savefig(out_plot_dir / "truth_vs_reco_examples_scatter.pdf")
@@ -365,14 +387,14 @@ def main(ckpt_path, n_eval, dev):
     }
     names_dict = {
         "pt_true": "$p_T$ true",
-        "eta_true": "$\\eta^\\mathrm{rel}$ true",
+        "eta_true": "$\\eta$ true",
         # "rapidity_true": "Rapidity true",
-        "phi_true": "$\\phi^\\mathrm{rel}$ true",
+        "phi_true": "$\\phi$ true",
         # "mass_true": "mass true",
         "pt_reco": "$p_T$ reco",
-        "eta_reco": "$\\eta^\\mathrm{rel}$ reco",
+        "eta_reco": "$\\eta$ reco",
         # "rapidity_reco": "Rapidity reco",
-        "phi_reco": "$\\phi^\\mathrm{rel}$ reco",
+        "phi_reco": "$\\phi$ reco",
         # "mass_reco": "mass reco",
     }
 

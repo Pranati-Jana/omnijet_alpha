@@ -334,7 +334,7 @@ def read_jetclass_file(
 def read_jetclass_h5_file(
     filepath,
     particle_features=["part_pt", "part_eta", "part_phi", "part_energy"],
-    jet_features=["jet_pt", "jet_eta", "jet_phi", "jet_sdmass"],
+    #jet_features=["jet_pt", "jet_eta", "jet_phi", "jet_sdmass"],
     labels=None,
     return_p4=False,
     n_load=None,
@@ -405,8 +405,8 @@ def read_jetclass_h5_file(
                 slc = slice(None)
             
         pf         = f["PFCands"][slc]
-        jets       = f["jet_kinematics"][slc]
-        tag        = f["jet_tagging"][slc]
+        #jets       = f["jet_kinematics"][slc]
+        #tag        = f["jet_tagging"][slc]
         event_info = f["event_info"][slc]
 
     pf = np.array(pf, dtype=np.float32)
@@ -442,51 +442,34 @@ def read_jetclass_h5_file(
          "part_pt"         : p4.pt,
          "part_eta"        : p4.eta,
          "part_phi"        : p4.phi,
-         "part_ptrel"      : p4.pt / p4_jet.pt[:, np.newaxis],
-         "part_erel"       : p4.E / p4_jet.energy[:, np.newaxis], 
-         "part_etarel"     : p4.deltaeta(p4_jet[:, np.newaxis]),
-         "part_phirel"     : p4.deltaphi(p4_jet[:, np.newaxis]),
-         "part_deltaR"     : p4.deltaR(p4_jet[:, np.newaxis]),
+         # "part_ptrel"      : p4.pt / p4_jet.pt[:, np.newaxis],
+         # "part_erel"       : p4.E / p4_jet.energy[:, np.newaxis], 
+         # "part_etarel"     : p4.deltaeta(p4_jet[:, np.newaxis]),
+         # "part_phirel"     : p4.deltaphi(p4_jet[:, np.newaxis]),
+         # "part_deltaR"     : p4.deltaR(p4_jet[:, np.newaxis]),
          "part_energy_raw" : p4.E,
     
          "part_pt_massless"         : p4_massless.pt,
          "part_eta_massless"        : p4_massless.eta,
          "part_phi_massless"        : p4_massless.phi,
-         "part_ptrel_massless"      : p4_massless.pt / p4_jet_massless.pt[:, np.newaxis],
-         "part_erel_massless"       : p4_massless.E / p4_jet_massless.energy[:, np.newaxis],
-         "part_etarel_massless"     : p4_massless.deltaeta(p4_jet_massless[:, np.newaxis]),
-         "part_phirel_massless"     : p4_massless.deltaphi(p4_jet_massless[:, np.newaxis]),
-         "part_deltaR_massless"     : p4_massless.deltaR(p4_jet_massless[:, np.newaxis]),
+         # "part_ptrel_massless"      : p4_massless.pt / p4_jet_massless.pt[:, np.newaxis],
+         # "part_erel_massless"       : p4_massless.E / p4_jet_massless.energy[:, np.newaxis],
+         # "part_etarel_massless"     : p4_massless.deltaeta(p4_jet_massless[:, np.newaxis]),
+         # "part_phirel_massless"     : p4_massless.deltaphi(p4_jet_massless[:, np.newaxis]),
+         # "part_deltaR_massless"     : p4_massless.deltaR(p4_jet_massless[:, np.newaxis]),
          "part_energy_raw_massless" : p4_massless.E,
     }
  
-    x_particles = ak.Array(part_dict) if particle_features is None else ak.Array({k: part_dict[k] for k in particle_features})
-    #Jet features
-    if jet_features is None:
-        print("WARNING: jet_features is None → using default feature set")
-        x_jets = jets
-    else:
-        # Map standard jet features from f["jet_kinematics"]
-        jet_map = {
-            "jet_pt": jets[:, 0],
-            "jet_eta": jets[:, 1],
-            "jet_phi": jets[:, 2],
-            "jet_sdmass": jets[:, 3],
-            "jet_nparticles": tag[:, 0],
-            "jet_tau1": tag[:, 1],
-            "jet_tau2": tag[:, 2],
-            "jet_tau3": tag[:, 3],
-            "jet_tau4": tag[:, 4],
+    x_particles = ak.Array(part_dict) if particle_features is None else ak.Array({k: part_dict[k] for k in        particle_features})
+    #Jet features: No jets info in event level dataset
+    x_jets = None
 
-        }
-    x_jets = np.column_stack([jet_map[f] for f in jet_features])
-    
+    # labels (optional)
     if labels is not None:
-        n_jets = len(jets)
-        y = ak.Array({name: np.zeros(n_jets, dtype=np.float32) for name in labels})
+        n_events = len(x_particles)
+        y = ak.Array({name: np.zeros(n_events, dtype=np.float32) for name in labels})
     else:
         y = None
-
 
     if return_p4:
         return x_particles, x_jets, y, p4
